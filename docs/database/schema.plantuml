@@ -1,0 +1,102 @@
+@startuml
+
+' ================
+' table definition
+' ================
+!define Table(name) class name << (T,#FFAAAA) >>
+hide methods
+hide stereotypes
+
+' =============
+' shared fields
+' =============
+!define ID <b><u>id</u></b> UUID NOT NULL
+!define column(x) <u>x</u>
+!define UUID UUID
+!define CREATED_AT column(createdAt) DATETIME NOT NULL
+!define UPDATED_AT column(updatedAt) DATETIME NOT NULL
+!define DELETED_AT column(deletedAt) DATETIME
+
+' ======
+' tables
+' ======
+Table(categories) {
+    ID
+    column(name) VARCHAR[100] NOT NULL
+    column(description) VARCHAR[500]
+    column(parentId) UUID
+    column(isActive) BOOLEAN NOT NULL DEFAULT true
+    CREATED_AT
+    UPDATED_AT
+}
+
+Table(attributes) {
+    ID
+    column(name) VARCHAR[100] NOT NULL
+    column(description) VARCHAR[500]
+    column(type) ENUM[text, number, boolean, date, list] NOT NULL
+    column(options) JSON
+    column(isRequired) BOOLEAN NOT NULL DEFAULT false
+    column(isActive) BOOLEAN NOT NULL DEFAULT true
+    CREATED_AT
+    UPDATED_AT
+}
+
+Table(products) {
+    ID
+    column(name) VARCHAR[200] NOT NULL
+    column(description) TEXT
+    column(sku) VARCHAR[50]
+    column(categoryId) UUID NOT NULL
+    column(price) DECIMAL[10,2]
+    column(currency) VARCHAR[3] DEFAULT 'USD'
+    column(isActive) BOOLEAN NOT NULL DEFAULT true
+    column(tags) JSON
+    CREATED_AT
+    UPDATED_AT
+}
+
+Table(product_variants) {
+    ID
+    column(productId) UUID NOT NULL
+    column(name) VARCHAR[200] NOT NULL
+    column(sku) VARCHAR[50]
+    column(price) DECIMAL[10,2]
+    column(currency) VARCHAR[3] DEFAULT 'USD'
+    column(stockQuantity) INT NOT NULL DEFAULT 0
+    column(isActive) BOOLEAN NOT NULL DEFAULT true
+    column(attributes) JSON
+    CREATED_AT
+    UPDATED_AT
+}
+
+Table(product_attributes) {
+    ID
+    column(productId) UUID NOT NULL
+    column(attributeId) UUID NOT NULL
+    column(value) TEXT
+    CREATED_AT
+    UPDATED_AT
+}
+
+Table(category_attributes) {
+    ID
+    column(categoryId) UUID NOT NULL
+    column(attributeId) UUID NOT NULL
+    column(isRequired) BOOLEAN NOT NULL DEFAULT false
+    CREATED_AT
+    UPDATED_AT
+}
+
+' =============
+' relationships
+' =============
+categories --> categories : Self Reference (Parent) >
+products --> categories : Belongs To >
+product_variants --> products : Belongs To >
+product_attributes --> products : Belongs To >
+product_attributes --> attributes : Belongs To >
+category_attributes --> categories : Belongs To >
+category_attributes --> attributes : Belongs To >
+
+@enduml

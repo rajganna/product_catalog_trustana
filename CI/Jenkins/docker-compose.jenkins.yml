@@ -1,0 +1,17 @@
+version: '3.6'
+services:
+  web: 
+    environment:
+      - NODE_ENV=jenkins
+      - DOCKER_RUN_MIGRATIONS=true
+  worker:
+    environment:
+      - NODE_ENV=jenkins
+  localstack:
+    volumes:
+      - "/private${TMPDIR}:/tmp/localstack"
+    environment: 
+      - HOSTNAME=localstack
+      - HOSTNAME_EXTERNAL=localstack
+  postgres:
+    tmpfs: /var/lib/postgresql/data

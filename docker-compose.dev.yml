@@ -1,0 +1,40 @@
+version: '3.6'
+services:
+  postgres:
+    image: postgres:10.13
+    environment:
+      POSTGRES_USER: 'root'
+      POSTGRES_PASSWORD: 'secret'
+      POSTGRES_DB: 'product_service'
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    ports:
+      - '9002:5432'
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d product_service"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:alpine
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  localstack:
+    image: localstack/localstack:0.11.6
+    environment:
+      - SERVICES=sqs,lambda,cloudwatch
+      - DEBUG=1
+      - DEFAULT_REGION=us-west-2
+      - LAMBDA_REMOTE_DOCKER=false
+      - LAMBDA_EXECUTOR=docker
+    ports:
+      - '4566:4566'
+    volumes:
+      - "/tmp/localstack:/tmp/localstack"

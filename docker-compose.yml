@@ -1,0 +1,81 @@
+version: '3.6'
+
+x-environment-base:
+  &default-environment
+  HOST: '0.0.0.0'
+  DB_HOST: 'postgres'
+  DB_PORT: '5432'
+  DB_NAME: 'product_service'
+  DB_USERNAME: 'root'
+  DB_PASSWORD: 'secret'
+
+services:
+  web:
+    image: app:production
+    build:
+      dockerfile: docker/Dockerfile
+      context: ./
+      target: production
+    ports:
+      - "3000:3000"
+    environment:
+      << : *default-environment
+      DOCKER_COMMAND: 'npm run start:prod'
+      CONTAINER_ADMINS: 'DbbRWDuJaV5xBZiKzqADUCADbEZs5ylK'
+    links:
+      - postgres
+      - localstack
+    depends_on:
+      - postgres
+      - localstack
+    env_file:
+      - .env
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
+
+  worker:
+    image: app:prod
+    environment:
+      << : *default-environment
+      DOCKER_COMMAND: 'npm run start:worker:prod'
+    links:
+      - postgres
+      - localstack
+    depends_on:
+      - postgres
+      - localstack
+    env_file:
+      - .env
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
+
+  localstack:
+    image: localstack/localstack:0.11.6
+    environment:
+      - SERVICES=sqs,lambda,cloudwatch
+      - DEBUG=1
+      - DEFAULT_REGION=us-west-2
+      - LAMBDA_REMOTE_DOCKER=false
+      - LAMBDA_EXECUTOR=docker
+      - ROOT=$PWD
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - "$PWD/localstack:/docker-entrypoint-initaws.d"
+      - "$PWD:$PWD"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    env_file:
+      - .env
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: 'root'
+      POSTGRES_PASSWORD: 'secret'
+      POSTGRES_DB: 'product_service'
+
+  redis:
+    image: redis:alpine

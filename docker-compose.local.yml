@@ -1,0 +1,49 @@
+version: '3.6'
+services:
+  web:
+    image: app:dev
+    build:
+      dockerfile: docker/Dockerfile
+      context: ./
+      target: dev
+    volumes:
+      - .:/app:cached
+    environment:
+      NODE_ENV: 'local'
+      DOCKER_COMMAND: 'npm run start:debug'
+    ports:
+      - '9000:3000'
+      - '9229:9229'
+      - '8000:8000'
+  worker:
+    image: app:dev
+    volumes:
+      - .:/app:cached
+    environment:
+      NODE_ENV: 'local'
+      DOCKER_COMMAND: 'npm run start:worker:debug'
+    ports:
+      - '9100:3001'
+      - '9129:9229'
+  localstack:
+    image: localstack/localstack:latest
+    volumes:
+      - "/private${TMPDIR}:/tmp/localstack"
+    ports:
+      - 4566:4566
+    environment:
+      - SERVICES=s3
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: product_service
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    ports:
+      - '9002:5432'
+  redis:
+    image: redis:7-alpine
+    expose:
+      - "6379"

@@ -1,0 +1,167 @@
+{
+  "rules": [
+    {
+      "name": "parameter-description",
+      "object": "parameter",
+      "disabled": false,
+      "description": "parameter objects should have a description",
+      "truthy": "description"
+    },
+    {
+      "name": "parameter-name-regex",
+      "object": "parameter",
+      "disabled": false,
+      "description": "parameter names should match an extended RFC6570",
+      "pattern": {
+        "property": "name",
+        "value": "^[A-Za-z0-9?_\\-()\\.\\[\\]]+$"
+      }
+    },
+    {
+      "name": "operation-operationId",
+      "object": "operation",
+      "disabled": false,
+      "description": "operation should have an operationId",
+      "truthy": "operationId"
+    },
+    {
+      "name": "operation-operationId-lower-camel-case",
+      "object": "operation",
+      "disabled": false,
+      "description": "operationId should be in a lower camelcase format",
+      "pattern": {
+        "property": "operationId",
+        "value": "[a-z]+[A-Z0-9][a-z0-9]+[A-Za-z0-9]*"
+      }
+    },
+    {
+      "name": "operation-summary-or-description",
+      "object": "operation",
+      "disabled": false,
+      "description": "operation should have summary or description",
+      "or": [
+        "summary",
+        "description"
+      ]
+    },
+    {
+      "name": "operation-short-summary",
+      "object": "operation",
+      "disabled": false,
+      "description": "summary should be short (description can be long)",
+      "maxLength": {
+        "property": "summary",
+        "value": 20
+      }
+    },
+    {
+      "name": "operation-tags",
+      "object": "operation",
+      "disabled": false,
+      "description": "operation should have non-empty tags array",
+      "truthy": "tags"
+    },
+    {
+      "name": "path-keys-no-trailing-slash",
+      "object": "paths",
+      "disabled": false,
+      "description": "paths should not end with a slash",
+      "notEndWith": {
+        "property": "$key",
+        "value": "/"
+      }
+    },
+    {
+      "name": "server-trailing-slash",
+      "object": "server",
+      "disabled": false,
+      "description": "server url should not have a trailing slash",
+      "notEndWith": {
+        "property": "url",
+        "value": "/"
+      }
+    },
+    {
+      "name": "openapi-tags",
+      "object": "openapi",
+      "disabled": false,
+      "description": "openapi object should have non-empty tags array",
+      "truthy": "tags"
+    },
+    {
+      "name": "openapi-tags-alphabetical",
+      "object": "openapi",
+      "disabled": false,
+      "description": "openapi object should have alphabetical tags",
+      "alphabetical": {
+        "properties": "tags",
+        "keyedBy": "name"
+      }
+    },
+    {
+      "name": "reference-no-other-properties",
+      "object": "reference",
+      "disabled": false,
+      "description": "reference objects should only have a $ref property",
+      "truthy": "$ref",
+      "properties": 1
+    },
+    {
+      "name": "pathItem-summary-or-description",
+      "object": "pathItem",
+      "disabled": false,
+      "description": "pathItem should have summary or description",
+      "or": [
+        "summary",
+        "description"
+      ]
+    },
+    {
+      "name": "example-value-or-externalValue",
+      "object": "example",
+      "disabled": false,
+      "description": "example should have either value or externalValue",
+      "xor": [
+        "value",
+        "externalValue"
+      ]
+    },
+    {
+      "name": "reference-components-regex",
+      "object": "reference",
+      "disabled": false,
+      "description": "reference components should all match spec regex ^[a-zA-Z0-9\\.\\-_]+",
+      "pattern": {
+        "property": "$ref",
+        "omit": "#",
+        "split": "/",
+        "value": "^[a-zA-Z0-9\\.\\-_]+$"
+      }
+    },
+    {
+      "name": "no-script-tags-in-markdown",
+      "object": "*",
+      "disabled": false,
+      "description": "markdown descriptions should not contain <script> tags",
+      "notContain": {
+        "properties": [
+          "description"
+        ],
+        "value": "<script"
+      }
+    },
+    {
+      "name": "no-eval-in-descriptions",
+      "object": "*",
+      "disabled": false,
+      "description": "markdown descriptions should not contain 'eval('",
+      "notContain": {
+        "properties": [
+          "description",
+          "title"
+        ],
+        "value": "eval("
+      }
+    }
+  ]
+}

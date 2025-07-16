@@ -1,0 +1,888 @@
+openapi: 3.0.0
+info:
+  title: Product Catalog Service API
+  description: A scalable, high-performance REST API for a product catalog system
+  contact:
+    name: API Support
+    email: support@trustana.com
+  version: "1.0.0"
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+tags:
+  - name: Health
+    description: Health check endpoints
+  - name: Categories
+    description: Product category management
+  - name: Attributes
+    description: Product attribute management
+  - name: Products
+    description: Product management and search
+
+servers:
+  - description: Development
+    url: 'http://localhost:3000'
+  - description: Production
+    url: 'https://api.trustana.com/products'
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      tags:
+        - Health
+      summary: Health check
+      description: Returns the health status of the service
+      responses:
+        200:
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        503:
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /categories:
+    get:
+      operationId: getCategories
+      tags:
+        - Categories
+      summary: Get all categories
+      description: Retrieves all product categories
+      parameters:
+        - $ref: '#/components/parameters/limitParam'
+        - $ref: '#/components/parameters/offsetParam'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Category'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+  /categories/tree:
+    get:
+      operationId: getCategoryTree
+      tags:
+        - Categories
+      summary: Get category tree
+      description: Retrieves the hierarchical category tree structure
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CategoryTree'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+  /attributes:
+    get:
+      operationId: getAttributes
+      tags:
+        - Attributes
+      summary: Get all attributes
+      description: Retrieves all product attributes
+      parameters:
+        - $ref: '#/components/parameters/limitParam'
+        - $ref: '#/components/parameters/offsetParam'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Attribute'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+  /products/search:
+    get:
+      operationId: searchProducts
+      tags:
+        - Products
+      summary: Search products
+      description: Search and filter products with advanced filtering capabilities
+      parameters:
+        - $ref: '#/components/parameters/limitParam'
+        - $ref: '#/components/parameters/offsetParam'
+        - name: keyword
+          in: query
+          description: Search keyword
+          schema:
+            type: string
+        - name: categoryId
+          in: query
+          description: Filter by category ID
+          schema:
+            type: string
+            format: uuid
+        - name: priceMin
+          in: query
+          description: Minimum price filter
+          schema:
+            type: number
+            format: decimal
+        - name: priceMax
+          in: query
+          description: Maximum price filter
+          schema:
+            type: number
+            format: decimal
+        - name: sortBy
+          in: query
+          description: Sort field
+          schema:
+            type: string
+            enum: [name, price, createdAt]
+            default: name
+        - name: sortOrder
+          in: query
+          description: Sort order
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  products:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Product'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+  /products/{productId}:
+    parameters:
+      - $ref: '#/components/parameters/productIdParam'
+
+    get:
+      operationId: getProduct
+      tags:
+        - Products
+      summary: Get product by ID
+      description: Retrieves a specific product by its ID
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDetailed'
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+  /products/{productId}/variants:
+    parameters:
+      - $ref: '#/components/parameters/productId'
+    get:
+      operationId: getProductVariants
+      tags:
+        - Products
+      summary: Get product variants
+      description: Retrieves all variants for a specific product
+      parameters:
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProductVariant'
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      operationId: createProductVariant
+      tags:
+        - Products
+      summary: Create product variant
+      description: Creates a new variant for a product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductVariantCreate'
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductVariant'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+  /products/{productId}/variants/{variantId}:
+    parameters:
+      - $ref: '#/components/parameters/productId'
+      - $ref: '#/components/parameters/variantId'
+    get:
+      operationId: getProductVariant
+      tags:
+        - Products
+      summary: Get product variant by ID
+      description: Retrieves a specific product variant
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductVariant'
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      operationId: updateProductVariant
+      tags:
+        - Products
+      summary: Update product variant
+      description: Updates a product variant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductVariantUpdate'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductVariant'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      operationId: deleteProductVariant
+      tags:
+        - Products
+      summary: Delete product variant
+      description: Deletes a product variant
+      responses:
+        204:
+          description: No Content
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  headers:
+    ETag:
+      schema:
+        type: string
+        format: uuid
+      description: The ETag of the response
+    RequestId:
+      schema:
+        type: string
+        format: uuid
+      description: Request-Id to keep trace in logs
+  parameters:
+    productId:
+      name: productId
+      in: path
+      description: The unique identifier for a product
+      required: true
+      schema:
+        type: string
+        format: uuid
+    categoryId:
+      name: categoryId
+      in: path
+      description: The unique identifier for a category
+      required: true
+      schema:
+        type: string
+        format: uuid
+    attributeId:
+      name: attributeId
+      in: path
+      description: The unique identifier for an attribute
+      required: true
+      schema:
+        type: string
+        format: uuid
+    variantId:
+      name: variantId
+      in: path
+      description: The unique identifier for a product variant
+      required: true
+      schema:
+        type: string
+        format: uuid
+    limit:
+      name: limit
+      in: query
+      description: Maximum number of items to return (1-100)
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    offset:
+      name: offset
+      in: query
+      description: Number of items to skip for pagination
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    sort:
+      name: sort
+      in: query
+      description: Sort criteria (e.g., 'name', 'createdAt desc')
+      required: false
+      schema:
+        type: string
+    search:
+      name: search
+      in: query
+      description: Search term for filtering products
+      required: false
+      schema:
+        type: string
+        maxLength: 100
+  responses:
+    BadRequest:
+      description: Bad Request - Invalid input parameters
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Invalid request parameters"
+              message:
+                type: string
+                example: "The provided data does not meet the required format"
+              statusCode:
+                type: integer
+                example: 400
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Resource not found"
+              message:
+                type: string
+                example: "The requested resource could not be found"
+              statusCode:
+                type: integer
+                example: 404
+    InternalServerError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Internal server error"
+              message:
+                type: string
+                example: "An unexpected error occurred"
+              statusCode:
+                type: integer
+                example: 500
+  schemas:
+    Pagination:
+      type: object
+      properties:
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 20
+        offset:
+          type: integer
+          minimum: 0
+          example: 0
+        total:
+          type: integer
+          example: 150
+        count:
+          type: integer
+          example: 20
+
+    Category:
+      type: object
+      required:
+        - name
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        parentId:
+          type: string
+          format: uuid
+          nullable: true
+        isActive:
+          type: boolean
+          default: true
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    CategoryCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        parentId:
+          type: string
+          format: uuid
+          nullable: true
+        isActive:
+          type: boolean
+          default: true
+
+    CategoryUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        parentId:
+          type: string
+          format: uuid
+          nullable: true
+        isActive:
+          type: boolean
+
+    Attribute:
+      type: object
+      required:
+        - name
+        - type
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        type:
+          type: string
+          enum: [text, number, boolean, date, list]
+        options:
+          type: array
+          items:
+            type: string
+          description: Available options for list type attributes
+        isRequired:
+          type: boolean
+          default: false
+        isActive:
+          type: boolean
+          default: true
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    AttributeCreate:
+      type: object
+      required:
+        - name
+        - type
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        type:
+          type: string
+          enum: [text, number, boolean, date, list]
+        options:
+          type: array
+          items:
+            type: string
+        isRequired:
+          type: boolean
+          default: false
+        isActive:
+          type: boolean
+          default: true
+
+    AttributeUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        options:
+          type: array
+          items:
+            type: string
+        isRequired:
+          type: boolean
+        isActive:
+          type: boolean
+
+    Product:
+      type: object
+      required:
+        - name
+        - categoryId
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 1000
+        sku:
+          type: string
+          maxLength: 50
+        categoryId:
+          type: string
+          format: uuid
+        price:
+          type: number
+          format: decimal
+          minimum: 0
+        currency:
+          type: string
+          maxLength: 3
+          example: "USD"
+        isActive:
+          type: boolean
+          default: true
+        tags:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    ProductDetailed:
+      allOf:
+        - $ref: '#/components/schemas/Product'
+        - type: object
+          properties:
+            category:
+              $ref: '#/components/schemas/Category'
+            variants:
+              type: array
+              items:
+                $ref: '#/components/schemas/ProductVariant'
+            attributes:
+              type: array
+              items:
+                $ref: '#/components/schemas/ProductAttribute'
+
+    ProductCreate:
+      type: object
+      required:
+        - name
+        - categoryId
+      properties:
+        name:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 1000
+        sku:
+          type: string
+          maxLength: 50
+        categoryId:
+          type: string
+          format: uuid
+        price:
+          type: number
+          format: decimal
+          minimum: 0
+        currency:
+          type: string
+          maxLength: 3
+          example: "USD"
+        isActive:
+          type: boolean
+          default: true
+        tags:
+          type: array
+          items:
+            type: string
+
+    ProductUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 1000
+        sku:
+          type: string
+          maxLength: 50
+        categoryId:
+          type: string
+          format: uuid
+        price:
+          type: number
+          format: decimal
+          minimum: 0
+        currency:
+          type: string
+          maxLength: 3
+        isActive:
+          type: boolean
+        tags:
+          type: array
+          items:
+            type: string
+
+    ProductVariant:
+      type: object
+      required:
+        - name
+        - productId
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        productId:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 200
+        sku:
+          type: string
+          maxLength: 50
+        price:
+          type: number
+          format: decimal
+          minimum: 0
+        currency:
+          type: string
+          maxLength: 3
+          example: "USD"
+        stockQuantity:
+          type: integer
+          minimum: 0
+        isActive:
+          type: boolean
+          default: true
+        attributes:
+          type: object
+          description: Variant-specific attribute values
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    ProductVariantCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          maxLength: 200
+        sku:
+          type: string
+          maxLength: 50
+        price:
+          type: number
+          format: decimal
+          minimum: 0
+        currency:
+          type: string
+          maxLength: 3
+          example: "USD"
+        stockQuantity:
+          type: integer
+          minimum: 0
+        isActive:
+          type: boolean
+          default: true
+        attributes:
+          type: object
+
+    ProductVariantUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 200
+        sku:
+          type: string
+          maxLength: 50
+        price:
+          type: number
+          format: decimal
+          minimum: 0
+        currency:
+          type: string
+          maxLength: 3
+        stockQuantity:
+          type: integer
+          minimum: 0
+        isActive:
+          type: boolean
+        attributes:
+          type: object
+
+    ProductAttribute:
+      type: object
+      properties:
+        attributeId:
+          type: string
+          format: uuid
+        attributeName:
+          type: string
+        value:
+          oneOf:
+            - type: string
+            - type: number
+            - type: boolean
+
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        uptime:
+          type: number
+          description: Uptime in seconds
+        dependencies:
+          type: object
+          properties:
+            database:
+              type: string
+              enum: [healthy, unhealthy]
+            redis:
+              type: string
+              enum: [healthy, unhealthy]
