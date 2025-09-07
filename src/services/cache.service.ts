@@ -339,12 +339,7 @@ export class CacheService implements OnModuleInit {
     }
   }
 
-  async refes() {
-    this.cacheEnabled.valueOf();
-  }
-
-  async move() {
-    this.cacheEnabled.valueOf();
+  async refresh() {
     this.logger.log('Testing')
   }
 }
