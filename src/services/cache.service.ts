@@ -338,4 +338,8 @@ export class CacheService implements OnModuleInit {
       this.logger.error('Failed to refresh materialized views:', error)
     }
   }
+
+  async refresh() {
+    this.logger.log('Testing')
+  }
 }
